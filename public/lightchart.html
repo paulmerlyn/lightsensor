@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<head>
+    <title>Real-Time Light Level</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+    <script src="https://github.com/nagix/chartjs-plugin-streaming/releases/download/v1.5.0/chartjs-plugin-streaming.min.js"></script>
+    <!-- Good documentation on streaming to chart.js at https://github.com/nagix/chartjs-plugin-streaming and https://nagix.github.io/chartjs-plugin-streaming/-->
+    <style type="text/css">
+        .lightLevelDisplay { 
+            margin: 12px 0 0 12px;
+            font-family: 'Courier New', Courier, monospace;
+         }
+    </style>
+</head>
+<body>
+    <div class="lightLevelDisplay">Latest light intensity level is:&nbsp;<span id="result"></span></div>
+    <canvas id="myChart" width="400" height="180"></canvas>
+    
+    <script type="text/javascript">
+        var source = new EventSource("/stream");
+
+        source.onmessage = event => {
+            console.log(event);
+            let lightLevel = parseInt(event.data, 10);
+            console.log('lightLevel is: ' + lightLevel);
+            document.getElementById("result").innerHTML = event.data + "<br>";
+            chart.lightLevel = lightLevel;
+            dataValues.pop();
+        };
+
+        var ctx = document.getElementById('myChart');
+        
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Light Intensity',
+                    borderColor: 'rgb(0, 0, 0)',
+                    backgroundColor: 'rgba(255, 255, 0, 0.6)',
+                    // lineTension: 0,
+                    borderDash: [8, 4],
+                    data: []
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'realtime',
+                    }],
+                    yAxes: [{
+                        display: true,
+                        ticks: {
+                            // Y-axis range setting for chart.js version 2, courtesy: https://stackoverflow.com/questions/28990708/chartjs-how-to-set-max-and-min-value-for-y-axis
+                            suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+                            // OR //
+                            beginAtZero: true   // minimum value will be 0.
+                        }
+                    }]
+                },
+                plugins: {
+                    streaming: {
+                        duration: 20000,
+                        refresh: 500,
+                        delay: 500,
+                        onRefresh: onRefresh
+                    }
+                }
+            }
+        });
+
+        function onRefresh(chart) {
+            chart.data.datasets.forEach(function(dataset) {
+                dataset.data.push({
+                    x: Date.now(),
+                    y: chart.lightLevel
+                });
+            });
+        }
+    </script>
+</body>
+</html>

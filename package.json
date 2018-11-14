@@ -1,0 +1,22 @@
+{
+  "name": "light_sensor",
+  "version": "1.0.0",
+  "description": "Arduino light sensor project + Node + chart.js + real-time sreaming project",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.16.4",
+    "serialport": "^7.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "arduino",
+    "light",
+    "sensor"
+  ],
+  "author": "pmerlyn",
+  "license": "ISC"
+}

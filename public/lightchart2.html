@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<head>
+    <title>Real-Time Light Level</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+	<script src="https://github.com/nagix/chartjs-plugin-streaming/releases/download/v1.5.0/chartjs-plugin-streaming.min.js"></script>
+</head>
+<body>
+    <div id="result"></div>
+    <canvas id="myChart" width="400" height="400"></canvas>
+    
+    <script type="text/javascript">
+        const displayResolution = 100; // i.e. number of data values displayed in rolling (last n) format
+
+        // Initialize data values array of size displayResolution to zeroes (courtesy: https://stackoverflow.com/questions/1295584/most-efficient-way-to-create-a-zero-filled-javascript-array)
+        let dataValues = Array.apply(null, Array(displayResolution)).map(Number.prototype.valueOf, 0); 
+
+        var source = new EventSource("/stream");
+        source.onmessage = event => {
+            console.log(event);
+            let lightLevel = parseInt(event.data, 10);
+            console.log('lightLevel is: ' + lightLevel);
+            document.getElementById("result").innerHTML = event.data + "<br>";
+            dataValues.push(lightLevel);
+            dataValues.pop();
+        };
+
+        var ctx = document.getElementById('myChart');
+
+        // Y-axis range setting for chart.js version 2, courtesy: https://stackoverflow.com/questions/28990708/chartjs-how-to-set-max-and-min-value-for-y-axis
+        var options = {
+            scales: {
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+                        // OR //
+                        beginAtZero: true   // minimum value will be 0.
+                    }
+                }]
+            }
+        };
+        
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                //labels: ['Jan', 2, 3, 'Apr'],
+                labels: range(displayResolution, 1),
+                datasets: [{
+                    label: "My first dataset",
+                    backgroundColor: 'rgb(255,99,132)',
+                    borderColor: 'rgb(255, 99,132)',
+                    data: dataValues
+                    //data: [0, 10, 5, 22]
+                }]
+            },
+            options: options
+        })
+
+        function range(size, startAt = 0) {
+            return [...Array(size).keys()].map(i => i + startAt);
+        }
+    </script>
+</body>
+</html>
